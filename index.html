@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sudoku</title>
+    <style>
+        * { margin: 0; padding: 0; }
+        html, body { width: 100%; height: 100%; font-family: serif; background: #fff; overflow: hidden; }
+
+        #wrapper { width: 600px; height: 800px; -webkit-transform-origin: 0 0; transform-origin: 0 0; }
+        #app { width: 600px; height: 800px; }
+
+        #header { height: 48px; border-bottom: 1px solid #000; padding: 0 16px 16px 16px; margin-bottom: 16px; }
+        #header h1 { float: left; font-size: 28px; line-height: 46px; }
+        #controls { float: right; }
+        select, button { height: 56px; padding: 0 12px; font-size: 18px; border: 2px solid #000; background: #fff; }
+
+        #board { border-collapse: collapse; margin: 0 auto }
+        #board td { width: 56px; height: 56px; border: 2px solid #999; text-align: center; vertical-align: middle; }
+        #board td.br { border-right: 4px solid #000; }
+        #board td.bb { border-bottom: 4px solid #000; }
+
+        .cell { width: 56px; height: 56px; border: none; background: #fff; font-size: 28px; }
+        .cell.i { font-weight: bold; background: #e8e8e8; }
+        .cell.s { background: #000; color: #fff; }
+        .cell.e { background: #000; color: #fff; }
+
+        #numpad { overflow: hidden; border-collapse: collapse; margin: 16px auto 16px auto }
+        .num { float: left; width: 64px; height: 64px; border: 2px solid #000; background: #fff; font-size: 28px; margin-right: 1px; }
+
+        #actions { height: 56px; overflow: hidden; }
+        #clear-btn, #submit-btn { float: left; width: 288px; height: 56px; font-size: 28px; }
+        #clear-btn { margin-right: 8px; }
+        #submit-btn { background: #000; color: #fff; }
+
+        #modal { display: none; position: absolute; top: 0; left: 0; width: 600px; height: 800px; background: rgba(255,255,255,0.95); }
+        #modal-box { position: absolute; top: 300px; left: 150px; width: 300px; padding: 30px; border: 3px solid #000; background: #fff; text-align: center; }
+        #modal h2 { font-size: 24px; margin-bottom: 15px; }
+        #play-btn { background: #000; color: #fff; }
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+    <div id="app">
+        <div id="header">
+            <h1>SUDOKU</h1>
+            <div id="controls">
+                <select id="diff"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select>
+                <button id="new-btn">New</button>
+            </div>
+        </div>
+        <div id="board-container"><table id="board"><tbody id="tbody"></tbody></table></div>
+                <div id="numpad"></div>
+        <div id="actions">
+            <button id="clear-btn">Clean Cell</button>
+            <button id="submit-btn">Submit</button>
+        </div>
+        <div id="modal"><div id="modal-box"><h2>You Win!</h2><button id="play-btn">Play Again</button></div></div>
+    </div>
+    </div>
+<script>
+(function() {
+    var CLUES = { easy: 40, medium: 32, hard: 25 };
+    var board = [], solution = [], initial = [], sel = null, errorCells = [];
+
+    function shuffle(a) {
+        var arr = a.slice(), i, j, t;
+        for (i = arr.length - 1; i > 0; i--) {
+            j = Math.floor(Math.random() * (i + 1));
+            t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+        }
+        return arr;
+    }
+
+    function valid(b, r, c, n) {
+        var i, br, bc;
+        for (i = 0; i < 9; i++) if (b[r][i] === n || b[i][c] === n) return false;
+        br = Math.floor(r / 3) * 3; bc = Math.floor(c / 3) * 3;
+        for (i = 0; i < 9; i++) if (b[br + Math.floor(i / 3)][bc + i % 3] === n) return false;
+        return true;
+    }
+
+    function solve(b) {
+        var r, c, nums, i, n;
+        for (r = 0; r < 9; r++) {
+            for (c = 0; c < 9; c++) {
+                if (!b[r][c]) {
+                    nums = shuffle([1,2,3,4,5,6,7,8,9]);
+                    for (i = 0; i < 9; i++) {
+                        n = nums[i];
+                        if (valid(b, r, c, n)) {
+                            b[r][c] = n;
+                            if (solve(b)) return true;
+                            b[r][c] = 0;
+                        }
+                    }
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function generate(diff) {
+        var r, c, pos, i, p;
+        solution = []; initial = []; board = [];
+        for (r = 0; r < 9; r++) { solution.push([0,0,0,0,0,0,0,0,0]); }
+        solve(solution);
+        for (r = 0; r < 9; r++) {
+            board.push(solution[r].slice());
+            initial.push([1,1,1,1,1,1,1,1,1]);
+        }
+        pos = shuffle([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80]);
+        for (i = 0; i < 81 - CLUES[diff]; i++) {
+            p = pos[i]; r = Math.floor(p / 9); c = p % 9;
+            board[r][c] = 0; initial[r][c] = 0;
+        }
+    }
+
+    function isErrorCell(r, c) {
+        for (var i = 0; i < errorCells.length; i++) {
+            if (errorCells[i][0] === r && errorCells[i][1] === c) return true;
+        }
+        return false;
+    }
+
+    function render() {
+        var html = '', r, c, v, cls, tdcls;
+        for (r = 0; r < 9; r++) {
+            html += '<tr>';
+            for (c = 0; c < 9; c++) {
+                v = board[r][c];
+                cls = 'cell';
+                if (initial[r][c]) cls += ' i';
+                if (sel && sel[0] === r && sel[1] === c) cls += ' s';
+                else if (isErrorCell(r, c)) cls += ' e';
+                tdcls = '';
+                if (c === 2 || c === 5) tdcls += ' br';
+                if (r === 2 || r === 5) tdcls += ' bb';
+                html += '<td class="' + tdcls + '"><button class="' + cls + '" data-r="' + r + '" data-c="' + c + '">' + (v || '') + '</button></td>';
+            }
+            html += '</tr>';
+        }
+        document.getElementById('tbody').innerHTML = html;
+        var cells = document.getElementsByClassName('cell');
+        for (var i = 0; i < cells.length; i++) {
+            cells[i].onclick = cellClick;
+        }
+    }
+
+    function cellClick(e) {
+        var btn = e.target || e.srcElement;
+        sel = [parseInt(btn.getAttribute('data-r'), 10), parseInt(btn.getAttribute('data-c'), 10)];
+        errorCells = [];
+        showError(false);
+        render();
+    }
+
+    function numClick(e) {
+        var btn = e.target || e.srcElement;
+        var n = parseInt(btn.getAttribute('data-n'), 10);
+        if (!sel || initial[sel[0]][sel[1]]) return;
+        board[sel[0]][sel[1]] = n;
+        render(); save();
+    }
+
+    function save() {
+        try { localStorage.setItem('sudoku', JSON.stringify({ board: board, solution: solution, initial: initial, diff: document.getElementById('diff').value })); } catch(e) {}
+    }
+
+    function load() {
+        try {
+            var d = JSON.parse(localStorage.getItem('sudoku'));
+            if (d && d.board) { board = d.board; solution = d.solution; initial = d.initial; document.getElementById('diff').value = d.diff || 'easy'; return true; }
+        } catch(e) {}
+        return false;
+    }
+
+    var errorTimeout = null;
+    var ERROR_DISPLAY_TIME = 2000;
+
+    function showError(hasError) {
+        if (errorTimeout) {
+            clearTimeout(errorTimeout);
+            errorTimeout = null;
+        }
+        if (hasError) {
+            errorTimeout = setTimeout(function() {
+                errorCells = [];
+                render();
+                errorTimeout = null;
+            }, ERROR_DISPLAY_TIME);
+        }
+    }
+
+    function submit() {
+        var r, c, v, i, empty = 0;
+        var errorSet = {};
+
+        function addError(row, col) {
+            errorSet[row + ',' + col] = [row, col];
+        }
+
+        // Submit rows
+        for (r = 0; r < 9; r++) {
+            var rowCount = {};
+            for (c = 0; c < 9; c++) {
+                v = board[r][c];
+                if (!v) { empty++; continue; }
+                if (!rowCount[v]) rowCount[v] = [];
+                rowCount[v].push(c);
+            }
+            for (v in rowCount) {
+                if (rowCount[v].length > 1) {
+                    for (i = 0; i < rowCount[v].length; i++) {
+                        addError(r, rowCount[v][i]);
+                    }
+                }
+            }
+        }
+
+        // Submit columns
+        for (c = 0; c < 9; c++) {
+            var colCount = {};
+            for (r = 0; r < 9; r++) {
+                v = board[r][c];
+                if (!v) continue;
+                if (!colCount[v]) colCount[v] = [];
+                colCount[v].push(r);
+            }
+            for (v in colCount) {
+                if (colCount[v].length > 1) {
+                    for (i = 0; i < colCount[v].length; i++) {
+                        addError(colCount[v][i], c);
+                    }
+                }
+            }
+        }
+
+        // Submit 3x3 boxes
+        for (var boxR = 0; boxR < 3; boxR++) {
+            for (var boxC = 0; boxC < 3; boxC++) {
+                var boxCount = {};
+                var startR = boxR * 3;
+                var startC = boxC * 3;
+                for (r = startR; r < startR + 3; r++) {
+                    for (c = startC; c < startC + 3; c++) {
+                        v = board[r][c];
+                        if (!v) continue;
+                        if (!boxCount[v]) boxCount[v] = [];
+                        boxCount[v].push([r, c]);
+                    }
+                }
+                for (v in boxCount) {
+                    if (boxCount[v].length > 1) {
+                        for (i = 0; i < boxCount[v].length; i++) {
+                            addError(boxCount[v][i][0], boxCount[v][i][1]);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Convert errorSet to array
+        var cells = [];
+        for (var key in errorSet) {
+            cells.push(errorSet[key]);
+        }
+
+        return { cells: cells, complete: empty === 0 && cells.length === 0 };
+    }
+
+    function scale() {
+        var w = document.getElementById('wrapper');
+        var vh = window.innerHeight || document.documentElement.clientHeight || 800;
+        var vw = window.innerWidth || document.documentElement.clientWidth || 600;
+        var s = Math.min(vh / 800, vw / 600) * 0.95;
+        w.style.webkitTransform = 'scale(' + s + ')';
+        w.style.transform = 'scale(' + s + ')';
+        w.style.marginLeft = ((vw - 600 * s) / 2) + 'px';
+        w.style.marginTop = ((vh - 800 * s) / 2) + 'px';
+    }
+
+    function init() {
+        var i, html = '';
+        for (i = 1; i <= 9; i++) html += '<button class="num" data-n="' + i + '">' + i + '</button>';
+        document.getElementById('numpad').innerHTML = html;
+        var nums = document.getElementsByClassName('num');
+        for (i = 0; i < nums.length; i++) nums[i].onclick = numClick;
+
+        document.getElementById('clear-btn').onclick = function() {
+            if (!sel || initial[sel[0]][sel[1]]) return;
+            board[sel[0]][sel[1]] = 0;
+            errorCells = [];
+            showError(false);
+            render(); save();
+        };
+
+        document.getElementById('submit-btn').onclick = function() {
+            var result = submit();
+            errorCells = result.cells;
+            showError(result.cells.length > 0);
+            render();
+            if (result.complete) { document.getElementById('modal').style.display = 'block'; try { localStorage.removeItem('sudoku'); } catch(e) {} }
+        };
+
+        document.getElementById('new-btn').onclick = document.getElementById('play-btn').onclick = function() {
+            generate(document.getElementById('diff').value);
+            sel = null;
+            errorCells = [];
+            showError(false);
+            document.getElementById('modal').style.display = 'none';
+            render(); save();
+        };
+
+        if (!load()) generate('easy');
+        render();
+        scale();
+        if (window.addEventListener) window.addEventListener('resize', scale);
+        else if (window.attachEvent) window.attachEvent('onresize', scale);
+    }
+
+    if (document.readyState === 'complete') init();
+    else if (document.addEventListener) document.addEventListener('DOMContentLoaded', init);
+    else document.attachEvent('onreadystatechange', function() { if (document.readyState === 'complete') init(); });
+})();
+</script>
+</body>
+</html>

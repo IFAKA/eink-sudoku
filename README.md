@@ -26,7 +26,7 @@
          Sudoku, but make it e-ink.
 ```
 
-A Sudoku game built specifically for **e-ink displays** like Kindle. No colors, no animations, no nonsense—just pure puzzle goodness optimized for that crispy monochrome screen.
+A Sudoku game built specifically for **e-ink displays** like Kindle. No colors, no animations, no frameworks, no dependencies—just a single HTML file optimized for that crispy monochrome screen.
 
 ---
 
@@ -56,71 +56,54 @@ Ever tried playing games on your Kindle? Most web games are a nightmare—flashy
 
 ## Features
 
+- **Single HTML file** — no build step, no dependencies, no node_modules
+- **~6KB total** — instant loading even on slow Kindle browsers
 - **Pure black & white** — designed for e-ink from the ground up
 - **Zero animations** — no ghosting, no flickering, no waiting
 - **600×800 viewport** — pixel-perfect for Kindle screens
-- **Three difficulty levels** — Easy, Medium, Hard
+- **Auto-scaling** — fits any screen size while maintaining aspect ratio
+- **Three difficulty levels** — Easy (40 clues), Medium (32), Hard (25)
 - **Auto-save** — close your browser, your game is still there
 - **Infinite puzzles** — algorithmic generation, never the same puzzle twice
 - **Offline-ready** — works without internet once loaded
 - **Touch-optimized** — big buttons, easy taps
+- **Visual distinction** — pre-filled numbers have a subtle gray background
 
 ---
 
 ## Quick Start
 
+No build. No install. Just open it.
+
 ```bash
-# Clone it
+# Option 1: Clone and open
 git clone https://github.com/yourusername/eink-sudoku.git
-cd eink-sudoku
+open eink-sudoku/index.html
 
-# Install dependencies
-npm install
-
-# Run locally
-npm run dev
+# Option 2: Just download index.html and double-click it
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and start playing.
+That's it. No `npm install`, no `node_modules`, no waiting.
 
 ---
 
-## Deploy to Your Kindle
+## Deploy Anywhere
 
-The magic of this project is that it exports as **static files**—no server needed.
+Since it's just one HTML file, deployment is trivial:
 
 ```bash
-# Build for production
-npm run build
-```
+# GitHub Pages
+git push origin main
+# Enable Pages in repo settings, done.
 
-This generates an `out/` folder with everything you need. From here you can:
+# Vercel/Netlify
+# Just drag and drop the file
 
-1. **Host it anywhere** — Vercel, Netlify, GitHub Pages, your own server
-2. **Sideload to Kindle** — Use Kindle's experimental browser to access your hosted version
+# Any web server
+cp index.html /var/www/html/sudoku.html
 
-```
-  ╔══════════════════════════════════════╗
-  ║         YOUR KINDLE                  ║
-  ║  ┌────────────────────────────────┐  ║
-  ║  │                                │  ║
-  ║  │      ┌───┬───┬───┬───┐        │  ║
-  ║  │      │ 5 │ 3 │   │   │        │  ║
-  ║  │      ├───┼───┼───┼───┤        │  ║
-  ║  │      │ 6 │   │   │ 1 │        │  ║
-  ║  │      ├───┼───┼───┼───┤        │  ║
-  ║  │      │   │ 9 │ 8 │   │        │  ║
-  ║  │      ├───┼───┼───┼───┤        │  ║
-  ║  │      │ 8 │   │   │   │        │  ║
-  ║  │      └───┴───┴───┴───┘        │  ║
-  ║  │                                │  ║
-  ║  │   [ 1 ] [ 2 ] [ 3 ] [ 4 ]     │  ║
-  ║  │   [ 5 ] [ 6 ] [ 7 ] [ 8 ]     │  ║
-  ║  │   [ 9 ] [ ⌫ ] [ Check ]       │  ║
-  ║  │                                │  ║
-  ║  └────────────────────────────────┘  ║
-  ║           [  ≡  ]    [  ○  ]         ║
-  ╚══════════════════════════════════════╝
+# Local file
+# Double-click index.html in any browser
 ```
 
 ---
@@ -134,8 +117,8 @@ This generates an `out/` folder with everything you need. From here you can:
 │        │                       │                      │      │
 │        ▼                       ▼                      ▼      │
 │   ┌─────────┐            ┌──────────┐           ┌────────┐   │
-│   │  Board  │ ────────►  │  useSudoku │ ──────► │ Modal  │   │
-│   │Component│            │   Hook    │          │ Popup  │   │
+│   │  Board  │ ────────►  │  submit()│ ────────► │ Modal  │   │
+│   │  Render │            │ function │           │ Popup  │   │
 │   └─────────┘            └──────────┘           └────────┘   │
 │        │                       │                             │
 │        │                       ▼                             │
@@ -158,35 +141,27 @@ This generates an `out/` folder with everything you need. From here you can:
 
 ```
 eink-sudoku/
-├── app/
-│   ├── page.tsx          # Main game page
-│   ├── layout.tsx        # Kindle-optimized viewport
-│   └── globals.css       # E-ink specific styles
-├── components/
-│   ├── Board.tsx         # 9×9 grid
-│   ├── Cell.tsx          # Individual cells
-│   ├── Header.tsx        # Title + controls
-│   ├── NumberPad.tsx     # Input buttons
-│   ├── ErrorDisplay.tsx  # Validation feedback
-│   └── SuccessModal.tsx  # Win screen
-├── lib/
-│   ├── sudoku.ts         # Puzzle generation & validation
-│   ├── storage.ts        # Persistence layer
-│   └── types.ts          # TypeScript definitions
-└── hooks/
-    └── useSudoku.ts      # Game state management
+└── index.html     # That's it. Everything in one file.
 ```
+
+**Inside index.html:**
+- Inline CSS (~40 lines) — e-ink optimized styles
+- Inline JS (~270 lines) — puzzle generation, validation, UI
+- Zero external dependencies
 
 ---
 
-## Tech Stack
+## Architecture
 
-| What | Why |
-|------|-----|
-| **Next.js 16** | Static export, zero config |
-| **React 19** | Fast, declarative UI |
-| **TypeScript** | Catch bugs before they happen |
-| **Tailwind CSS** | Rapid styling, small bundle |
+| Component | Description |
+|-----------|-------------|
+| `generate()` | Creates valid Sudoku puzzles using backtracking |
+| `solve()` | Recursive solver with randomized number order |
+| `valid()` | Checks row, column, and 3×3 box constraints |
+| `submit()` | Full board validation with error highlighting |
+| `render()` | Efficient DOM updates via innerHTML |
+| `scale()` | Responsive viewport scaling for any screen |
+| `save()/load()` | localStorage persistence |
 
 ---
 
@@ -195,32 +170,35 @@ eink-sudoku/
 ```
 ┌─────────────────────────────────────────────────┐
 │                                                 │
-│   EASY        MEDIUM         HARD               │
-│   38-45       30-37          22-29              │
-│   clues       clues          clues              │
+│   EASY          MEDIUM          HARD            │
+│   40 clues      32 clues        25 clues        │
 │                                                 │
-│   ████████    ██████░░       ████░░░░           │
-│   ████████    ██████░░       ████░░░░           │
-│   ████████    ██████░░       ████░░░░           │
+│   ████████      ██████░░        ████░░░░        │
+│   ████████      ██████░░        ████░░░░        │
 │                                                 │
-│   Perfect     A nice         For the            │
-│   for a       challenge      brave              │
-│   quick                                         │
-│   game                                          │
+│   Relaxed       Balanced        Challenging     │
 │                                                 │
 └─────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Scripts
+## Browser Compatibility
 
-```bash
-npm run dev      # Start development server
-npm run build    # Production build + static export
-npm run start    # Serve production build
-npm run lint     # Check code quality
-```
+Works on:
+- Kindle Experimental Browser
+- All modern browsers (Chrome, Firefox, Safari, Edge)
+- Legacy browsers (IE9+ with graceful degradation)
+
+---
+
+## Why Single-File?
+
+1. **E-ink browsers are slow** — fewer requests = faster load
+2. **Kindle browser is limited** — simpler code = fewer bugs
+3. **Offline works better** — one file to cache
+4. **Easy to modify** — no build step, just edit and refresh
+5. **Easy to deploy** — copy one file anywhere
 
 ---
 
